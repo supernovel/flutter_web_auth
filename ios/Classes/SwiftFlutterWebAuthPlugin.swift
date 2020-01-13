@@ -53,10 +53,13 @@ public class SwiftFlutterWebAuthPlugin: NSObject, FlutterPlugin {
 
                 session.start()
                 keepMe = session
-            } else {
+            } else if #available(iOS 11, *) {
                 let session = SFAuthenticationSession(url: url, callbackURLScheme: callbackURLScheme, completionHandler: completionHandler)
                 session.start()
                 keepMe = session
+            } else {
+                result(FlutterError(code: "FAILED", message: "Not supported iOS 10 and below." , details: nil));
+                return
             }
         } else {
             result(FlutterMethodNotImplemented)
