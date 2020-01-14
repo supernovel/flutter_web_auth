@@ -19,20 +19,25 @@ public class SwiftFlutterWebAuthPlugin: NSObject, FlutterPlugin {
             let completionHandler = { (url: URL?, err: Error?) in
                 keepMe = nil
 
-                if let err = err {
-                    if #available(iOS 12, *) {
-                        if case ASWebAuthenticationSessionError.Code.canceledLogin = err {
-                            result(FlutterError(code: "CANCELED", message: "User canceled login", details: nil))
-                            return
-                        }
-                    } else {
-                        if case SFAuthenticationError.Code.canceledLogin = err {
-                            result(FlutterError(code: "CANCELED", message: "User canceled login", details: nil))
-                            return
-                        }
-                    }
+                // if let err = err {
+                //     if #available(iOS 12, *) {
+                //         if case ASWebAuthenticationSessionError.Code.canceledLogin = err {
+                //             result(FlutterError(code: "CANCELED", message: "User canceled login", details: nil))
+                //             return
+                //         }
+                //     } else {
+                //         if case SFAuthenticationError.Code.canceledLogin = err {
+                //             result(FlutterError(code: "CANCELED", message: "User canceled login", details: nil))
+                //             return
+                //         }
+                //     }
 
-                    result(FlutterError(code: "EUNKNOWN", message: err.localizedDescription, details: nil))
+                //     result(FlutterError(code: "EUNKNOWN", message: err.localizedDescription, details: nil))
+                //     return
+                // }
+
+                if(url == nil){
+                    result(FlutterError(code: "CANCELED", message: "User canceled login", details: nil))
                     return
                 }
 
