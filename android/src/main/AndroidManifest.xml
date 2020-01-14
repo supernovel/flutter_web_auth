@@ -1,3 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   package="com.linusu.flutter_web_auth">
+    <application>
+        <activity android:name=".AuthManagementActivity" android:exported="false" android:launchMode="singleTask">
+        </activity>
+    </application>
 </manifest>

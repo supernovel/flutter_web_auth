@@ -1,10 +1,12 @@
 package com.linusu.flutter_web_auth
 
+import android.app.Activity
 import java.util.HashMap
 
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 
 import androidx.browser.customtabs.CustomTabsIntent
 
@@ -12,35 +14,55 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
-class FlutterWebAuthPlugin(private val context: Context): MethodCallHandler {
-  companion object {
-    public val callbacks = HashMap<String, Result>()
+class FlutterWebAuthPlugin(private val activity: Activity) : MethodCallHandler, PluginRegistry.ActivityResultListener {
+    private var result : Result? = null
 
-    @JvmStatic
-    fun registerWith(registrar: Registrar) {
-      val channel = MethodChannel(registrar.messenger(), "flutter_web_auth")
-      channel.setMethodCallHandler(FlutterWebAuthPlugin(registrar.activity() ?: registrar.context()))
+    companion object {
+        private const val AUTH_REQUEST_CODE = 23
+
+        @JvmStatic
+        fun registerWith(registrar: Registrar) {
+            val channel = MethodChannel(registrar.messenger(), "flutter_web_auth")
+            val plugin = FlutterWebAuthPlugin(registrar.activity())
+            channel.setMethodCallHandler(plugin)
+            registrar.addActivityResultListener(plugin)
+        }
     }
-  }
 
-  override fun onMethodCall(call: MethodCall, result: Result) {
-    if (call.method == "authenticate") {
-      val url = Uri.parse(call.argument<String>("url"))
-      val callbackUrlScheme = call.argument<String>("callbackUrlScheme")!!
+    override fun onMethodCall(call: MethodCall, result: Result) {
+        if (call.method == "authenticate") {
+            val callbackUrlScheme = call.argument<String>("callbackUrlScheme")!!
 
-      callbacks.put(callbackUrlScheme, result)
+            this.result = result
 
-      val intent = CustomTabsIntent.Builder().build()
-      val keepAliveIntent = Intent().setClassName(context.getPackageName(), KeepAliveService::class.java.canonicalName)
+            val intent = Intent(activity, AuthManagementActivity::class.java).apply {
+                putExtra(AuthManagementActivity.INPUT_STRING_URL, call.argument<String>("url"))
+                putExtra(AuthManagementActivity.INPUT_STRING_URL, call.argument<String>("url"))
+                putExtra(AuthManagementActivity.INPUT_STRING_CALLBACK_SCHEME, callbackUrlScheme)
+            }
 
-      intent.intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NO_HISTORY or Intent.FLAG_ACTIVITY_NEW_TASK)
-      intent.intent.putExtra("android.support.customtabs.extra.KEEP_ALIVE", keepAliveIntent)
-
-      intent.launchUrl(context, url)
-    } else {
-      result.notImplemented()
+            activity.startActivityForResult(intent, AUTH_REQUEST_CODE)
+        } else {
+            result.notImplemented()
+        }
     }
-  }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+        if(requestCode == AUTH_REQUEST_CODE){
+            if(resultCode == AuthManagementActivity.RESULT_OK){
+                result?.success(data?.data)
+            }else{
+                val errorCode = data?.getStringExtra(AuthManagementActivity.ERROR_CODE_KEY)
+                val errorMessage = data?.getStringExtra(AuthManagementActivity.ERROR_MESSAGE_KEY)
+                result?.error(errorCode, errorMessage, errorMessage)
+            }
+
+            return true
+        }
+
+        return false
+    }
 }

@@ -1,20 +1,25 @@
 package com.linusu.flutter_web_auth
 
 import android.app.Activity
-import android.net.Uri
+import android.content.Intent
 import android.os.Bundle
 
-public class CallbackActivity: Activity() {
+class CallbackActivity: Activity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    val url = getIntent()?.getData() as? Uri
-    val scheme = url?.getScheme()
+    val url = intent?.data
+    val scheme = url?.scheme
 
     if (scheme != null) {
-      FlutterWebAuthPlugin.callbacks.remove(scheme)?.success(url.toString())
+      val intent = Intent(this.applicationContext, AuthManagementActivity::class.java)
+      intent.data = url
+      intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+      startActivity(intent)
+
+      //FlutterWebAuthPlugin.callbacks.remove(scheme)?.success(url.toString())
     }
 
-    this.finish()
+    finish()
   }
 }

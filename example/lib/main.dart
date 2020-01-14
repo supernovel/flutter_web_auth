@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:io' show HttpServer;
 
@@ -81,7 +82,9 @@ class _MyAppState extends State<MyApp> {
     final server = await HttpServer.bind('127.0.0.1', 43823);
 
     server.listen((req) async {
-      setState(() { _status = 'Received request!'; });
+      setState(() {
+        _status = 'Received request!';
+      });
 
       req.response.headers.add('Content-Type', 'text/html');
       req.response.write(html);
@@ -90,12 +93,31 @@ class _MyAppState extends State<MyApp> {
   }
 
   void authenticate() async {
-    final url = 'http://localtest.me:43823/';
-    final callbackUrlScheme = 'foobar';
+    final url = Uri.https('appleid.apple.com', '/auth/authorize', {
+      'response_type': 'code id_token',
+      'client_id': 'com.bbtree.pixup',
+      'redirect_uri': 'https://dev-auth.thepixup.com/oauth/redirect',
+      'response_mode': 'form_post',
+      'scope': 'email name',
+      'state': 'test'
+    });
 
-    final result = await FlutterWebAuth.authenticate(url: url, callbackUrlScheme: callbackUrlScheme);
+    final callbackUrlScheme = 'oauthredirect';
 
-    setState(() { _status = 'Got result: $result'; });
+    try {
+      final result = await FlutterWebAuth.authenticate(
+          url: url.toString(), callbackUrlScheme: callbackUrlScheme);
+
+      setState(() {
+        _status = 'Got result: $result';
+      });
+    } on PlatformException catch (exception) {
+      if (exception.code == WebAuthErrorCode.USER_CANCELED) {
+        print("user cancled");
+      } else {
+        rethrow;
+      }
+    }
   }
 
   @override
@@ -113,7 +135,9 @@ class _MyAppState extends State<MyApp> {
               const SizedBox(height: 80),
               RaisedButton(
                 child: Text('Authenticate'),
-                onPressed: () { this.authenticate(); },
+                onPressed: () {
+                  this.authenticate();
+                },
               ),
             ],
           ),
