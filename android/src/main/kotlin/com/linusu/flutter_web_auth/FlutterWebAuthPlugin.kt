@@ -53,7 +53,7 @@ class FlutterWebAuthPlugin(private val activity: Activity) : MethodCallHandler, 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if(requestCode == AUTH_REQUEST_CODE){
             if(resultCode == AuthManagementActivity.RESULT_OK){
-                result?.success(data?.data)
+                result?.success(data?.data.toString())
             }else{
                 val errorCode = data?.getStringExtra(AuthManagementActivity.ERROR_CODE_KEY)
                 val errorMessage = data?.getStringExtra(AuthManagementActivity.ERROR_MESSAGE_KEY)
